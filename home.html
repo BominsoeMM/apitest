@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        tr, td {
+            border: 1px solid black;
+        }
+
+        td {
+            padding: 10px 15px;
+        }
+    </style>
+</head>
+<body>
+<form id="productCreate" action="">
+    <input type="text" name="name" placeholder="Enter Product Name">
+    <input type="number" name="price" placeholder="Enter Product Price">
+    <input type="number" name="stock" placeholder="Enter Product Stock">
+    <input type="file" multiple enctype="multipart/form-data" name="photos[]" placeholder="Choose Product Photos">
+    <button>ADD</button>
+</form>
+<hr>
+<table>
+    <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Price</th>
+        <th>Stock</th>
+    </tr>
+    <tbody id="rows">
+
+    </tbody>
+</table>
+
+<button id="logout">Logout</button>
+
+</body>
+<script src="node_modules/js-cookie/dist/js.cookie.min.js"></script>
+<script>
+    // if (!Cookies.get('token')) {
+    //     location.href = "index.html";
+    // }
+    let host = "http://127.0.0.1:8000/";
+    let path = host + "api/products";
+    let headers = new Headers();
+    headers.append("Authorization", "Bearer " + Cookies.get('token'));
+
+    //Logout
+    let logout = document.getElementById("logout");
+    logout.addEventListener('click', function () {
+        fetch( host + "api/logout", {
+            method: "POST",
+            headers
+        })
+            .then(res => {
+                if (res.status === 204) {
+                    Cookies.remove('token');
+                    location.href = "index.html";
+                }
+                else {
+                    console.log('lee')
+                }
+            })
+    })
+    //List Product
+    let rows = document.getElementById('rows');
+    fetch(path, {
+        method: "GET",
+        headers
+    }).then(res => res.json())
+        .then(json => {
+            if(json.data.length){
+                json.data.forEach(current => {
+                    let tr = document.createElement('tr')
+                    tr.innerHTML = `
+                 <td>${current.id}</td>
+                 <td>${current.name}</td>
+                 <td>${current.price}</td>
+                 <td>${current.stock}</td>      `;
+                    rows.append(tr)
+                })
+            }
+        })
+
+    //Product Create
+    let loginForm = document.getElementById('productCreate');
+    loginForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        let formData = new FormData(this)
+        fetch(path, {
+            method: "POST",
+            headers,
+            body: formData
+        })
+            .then(res => res.json())
+            .then(json => {
+                if (json.hasOwnProperty('success')) {
+                    console.log(json.product)
+                    productCreate.reset()
+                } else {
+                    console.log(json)
+                }
+            })
+    })
+</script>
+</html>
